@@ -1,0 +1,5 @@
+# Ignore k6 report
+report.html
+
+# Ignore k6 results
+partial-results.json

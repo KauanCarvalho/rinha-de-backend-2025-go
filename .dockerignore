@@ -1,0 +1,12 @@
+# Test load scripts and mock processor services are not needed in the image
+load-test
+payment-processors
+
+# Local version manager config (not needed in Docker context)
+.tool-versions
+
+# Makefile used only for local development automation
+Makefile
+
+# K6 load test report output (generated file)
+report.yml

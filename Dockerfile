@@ -1,0 +1,22 @@
+FROM golang:1.24.5-alpine3.22 AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o worker ./cmd/worker
+
+FROM alpine:3.22 AS release
+
+WORKDIR /app
+
+COPY ./containers/app/docker-entrypoint.sh ./
+COPY --from=builder /app/api ./api
+COPY --from=builder /app/worker ./worker
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
