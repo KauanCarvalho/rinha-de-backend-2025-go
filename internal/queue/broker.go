@@ -15,8 +15,8 @@ import (
 const (
 	mainQueue      = "payments_created"
 	resultHash     = "payments"
-	defaultWorkers = 100
-	consumers      = 1
+	defaultWorkers = 200
+	enqueuers      = 1
 )
 
 type Payload struct {
@@ -29,16 +29,16 @@ var paymentQueue = make(chan []byte, 20000)
 func StartBroker(ctx context.Context) {
 	workerCount := defaultWorkers
 
-	for i := 0; i < consumers; i++ {
-		go startRedisConsumer(ctx, i)
+	for i := range enqueuers {
+		go startRedisEnqueuer(ctx, i)
 	}
 
-	for i := 0; i < workerCount; i++ {
+	for i := range workerCount {
 		go startPaymentProcessor(ctx, i)
 	}
 }
 
-func startRedisConsumer(ctx context.Context, id int) {
+func startRedisEnqueuer(ctx context.Context, id int) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -78,17 +78,16 @@ func startPaymentProcessor(ctx context.Context, workerNum int) {
 }
 
 func processPayload(ctx context.Context, payload Payload) {
-	now := time.Now().UTC().Truncate(time.Millisecond).Format(time.RFC3339)
-	params := processor.PaymentRequest{
-		CorrelationID: payload.CorrelationID,
-		Amount:        payload.Amount,
-		RequestedAt:   now,
-	}
-
 	processorName, err := paymentprocessors.CurrentProcessor(ctx)
 	if err != nil {
 		requeue(ctx, payload)
 		return
+	}
+
+	params := processor.PaymentRequest{
+		CorrelationID: payload.CorrelationID,
+		Amount:        payload.Amount,
+		RequestedAt:   time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
 	var sendErr error
@@ -102,6 +101,7 @@ func processPayload(ctx context.Context, payload Payload) {
 	}
 
 	if sendErr != nil {
+		paymentprocessors.RecalculateProcessor(ctx, processorName)
 		requeue(ctx, payload)
 		return
 	}
@@ -110,7 +110,7 @@ func processPayload(ctx context.Context, payload Payload) {
 		"correlationId": payload.CorrelationID,
 		"amount":        payload.Amount,
 		"processor":     processorName,
-		"createdAt":     now,
+		"requestedAt":   params.RequestedAt,
 	}
 	resultJSON, _ := json.Marshal(data)
 	_ = redis.Client.HSet(ctx, resultHash, payload.CorrelationID, resultJSON).Err()

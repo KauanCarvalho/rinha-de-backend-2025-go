@@ -3,6 +3,7 @@ package payments
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"time"
 
 	"github.com/KauanCarvalho/rinha-de-backend-2025-go/internal/redis"
@@ -11,7 +12,7 @@ import (
 type PaymentEntry struct {
 	Amount      float64 `json:"amount"`
 	Processor   string  `json:"processor"`
-	CreatedAt   string  `json:"createdAt"`
+	RequestedAt string  `json:"requestedAt"`
 }
 
 type Summary struct {
@@ -41,12 +42,12 @@ func GetSummary(fromStr, toStr string) (map[string]Summary, error) {
 			continue
 		}
 
-		createdAt, err := time.Parse(time.RFC3339, entry.CreatedAt)
+		requestedAt, err := time.Parse(time.RFC3339Nano, entry.RequestedAt)
 		if err != nil {
 			continue
 		}
 
-		if !inRange(createdAt, from, to) {
+		if !inRange(requestedAt, from, to) {
 			continue
 		}
 
@@ -65,7 +66,7 @@ func parseTime(s string) (time.Time, bool) {
 	if s == "" {
 		return time.Time{}, false
 	}
-	t, err := time.Parse(time.RFC3339, s)
+	t, err := time.Parse(time.RFC3339Nano, s)
 	return t, err == nil
 }
 
@@ -83,7 +84,7 @@ func roundSummary(s map[string]Summary) {
 	for k, v := range s {
 		s[k] = Summary{
 			TotalRequests: v.TotalRequests,
-			TotalAmount:   float64(int(v.TotalAmount*100)) / 100.0,
+			TotalAmount:   math.Round(v.TotalAmount*100) / 100.0,
 		}
 	}
 }

@@ -23,12 +23,63 @@ func ChooseAndCacheProcessor(ctx context.Context) error {
 
 	selected := selectProcessor(def, fbk)
 
+	return setProcessorCache(ctx, selected, def, fbk, false)
+}
+
+func RecalculateProcessor(ctx context.Context, processorFailing string) error {
+	val, err := redis.Client.Get(ctx, cacheKey).Result()
+	if err != nil || val == "" {
+		return nil
+	}
+
+	var parsed struct {
+		CurrentProcessor string          `json:"current_processor"`
+		Def              json.RawMessage `json:"def"`
+		Fbk              json.RawMessage `json:"fbk"`
+		Overwritten      bool            `json:"overwritten"`
+	}
+
+	if err := json.Unmarshal([]byte(val), &parsed); err != nil {
+		return err
+	}
+
+	if parsed.Overwritten || processorFailing != parsed.CurrentProcessor {
+		return nil
+	}
+
+	def := &processor.HealthResponse{}
+	fbk := &processor.HealthResponse{}
+
+	if err := json.Unmarshal(parsed.Def, def); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(parsed.Fbk, fbk); err != nil {
+		return err
+	}
+
+	if processorFailing == defaultProcessor {
+		def.Failing = true
+	} else {
+		fbk.Failing = true
+	}
+
+	selected := selectProcessor(def, fbk)
+	return setProcessorCache(ctx, selected, def, fbk, true)
+}
+
+func setProcessorCache(ctx context.Context, selected string, def, fbk *processor.HealthResponse, overwritten bool) error {
+	defJSON, _ := json.Marshal(def)
+	fbkJSON, _ := json.Marshal(fbk)
+
 	payload := map[string]interface{}{
 		"current_processor": selected,
+		"def":               json.RawMessage(defJSON),
+		"fbk":               json.RawMessage(fbkJSON),
+		"overwritten":       overwritten,
 		"ts":                time.Now().UTC(),
 	}
-	data, _ := json.Marshal(payload)
 
+	data, _ := json.Marshal(payload)
 	return redis.Client.Set(ctx, cacheKey, data, ttl).Err()
 }
 

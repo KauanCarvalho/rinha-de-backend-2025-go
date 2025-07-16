@@ -121,7 +121,7 @@ The API provides:
 
 * `GET /payments-summary?from=...&to=...`
 
-* Filters entries from Redis `payments` hash using `createdAt`
+* Filters entries from Redis `payments` hash using `requestedAt`
 
 * Aggregates:
 
