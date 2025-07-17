@@ -4,8 +4,9 @@
 
 This Go solution handles thousands of concurrent payment requests with:
 
-* ✅ Low memory footprint
-* ✅ Near-zero inconsistency on `amount`
+* ✅ Zero inconsistencies
+* ✅ Zero lost messages
+* ✅ No OOM (Out-of-Memory) issues
 * ✅ Fast response time (p99 under 6ms)
 * ✅ No duplicated or dropped messages
 
