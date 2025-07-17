@@ -11,6 +11,10 @@ This Go solution handles thousands of concurrent payment requests with:
 
 > Designed for simplicity, robustness, and visibility — using only Go, Redis, and FastHTTP.
 
+![HTTP_Performance_Overview](https://github.com/user-attachments/assets/03059935-335b-4d69-99bc-2bc1b78a8e9b)
+
+![Summary](https://github.com/user-attachments/assets/776b709a-e83b-4409-9f5e-3dc65da893d4)
+
 ---
 
 ## 🧬 Core Architecture
