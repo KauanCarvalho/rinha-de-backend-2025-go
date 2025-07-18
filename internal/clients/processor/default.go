@@ -11,10 +11,10 @@ import (
 var defaultBaseURL = getEnv("DEFAULT_PROCESSOR_URL", "http://payment-processor-default:8080")
 
 var defaultClient = &fasthttp.Client{
-	MaxConnsPerHost:           4096,
-	MaxIdleConnDuration:       90 * time.Second,
-	ReadTimeout:               5 * time.Second,
-	WriteTimeout:              5 * time.Second,
+	MaxConnsPerHost:               8192,
+	MaxIdleConnDuration:           90 * time.Second,
+	ReadTimeout:                   5 * time.Second,
+	WriteTimeout:                  5 * time.Second,
 	DisableHeaderNamesNormalizing: true,
 }
 
@@ -44,6 +44,7 @@ func DefaultCreatePayment(req PaymentRequest) error {
 
 	return nil
 }
+
 func DefaultHealthcheck() (*HealthResponse, error) {
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()

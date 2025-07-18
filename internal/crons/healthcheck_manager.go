@@ -25,7 +25,7 @@ func RunHealthcheckManager() {
 	}
 
 	err = lock.WithRedisLock(ctx, lockKey, lockTTL, func() {
-		_ = paymentprocessors.ChooseAndCacheProcessor(ctx)
+		paymentprocessors.ChooseAndCacheProcessor(ctx)
 	})
 	if err != nil {
 		return

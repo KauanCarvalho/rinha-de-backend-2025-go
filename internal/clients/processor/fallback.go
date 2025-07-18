@@ -11,10 +11,10 @@ import (
 var fallbackBaseURL = getEnv("FALLBACK_PROCESSOR_URL", "http://payment-processor-fallback:8080")
 
 var fallbackClient = &fasthttp.Client{
-	MaxConnsPerHost:           4096,
-	MaxIdleConnDuration:       90 * time.Second,
-	ReadTimeout:               5 * time.Second,
-	WriteTimeout:              5 * time.Second,
+	MaxConnsPerHost:               8192,
+	MaxIdleConnDuration:           90 * time.Second,
+	ReadTimeout:                   5 * time.Second,
+	WriteTimeout:                  5 * time.Second,
 	DisableHeaderNamesNormalizing: true,
 }
 
